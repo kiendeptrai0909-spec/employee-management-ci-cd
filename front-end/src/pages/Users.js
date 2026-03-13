@@ -6,8 +6,9 @@ function Users() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:8080/users")
-      .then(res => setUsers(res.data));
+    axios.get("https://employee-management-ci-cd.onrender.com/users")
+      .then(res => setUsers(res.data))
+      .catch(err => console.error(err));
   }, []);
 
   return (
@@ -19,7 +20,6 @@ function Users() {
           {user.id} - {user.name}
         </div>
       ))}
-
     </div>
   );
 }
