@@ -6,6 +6,4 @@ COPY . .
 
 RUN mvn clean package -DskipTests
 
-RUN cp target/*.jar app.jar
-
-CMD ["java","-jar","app.jar"]
+CMD java -jar target/*.jar
