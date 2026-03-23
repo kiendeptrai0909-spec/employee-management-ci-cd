@@ -20,5 +20,11 @@ Endpoint:
 - `GET /api/users`
 
 ## Cách chạy Frontend (local)
-Chưa cấu hình ở bước 1. (sẽ làm tiếp)
+1. Mở terminal trong thư mục `frontend`
+2. Cài dependencies và chạy Vite
+   - `npm install`
+   - `npm run dev`
+
+Nếu bạn muốn trỏ frontend tới backend đang deploy (Render), dùng file:
+- `frontend/.env.example` (biến `VITE_API_BASE_URL`)
 
