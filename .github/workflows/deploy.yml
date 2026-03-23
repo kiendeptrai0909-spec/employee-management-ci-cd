@@ -1,0 +1,26 @@
+name: CD (Deploy Hooks)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-backend-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy backend to Render (webhook)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -sS -X POST \
+            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  deploy-frontend-vercel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy frontend to Vercel (webhook)
+        if: ${{ secrets.VERCEL_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -sS -X POST \
+            "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+

@@ -34,3 +34,10 @@ Repo có workflow `/.github/workflows/ci.yml` để:
 - Build frontend bằng Vite
 Mỗi lần `push` hoặc tạo `pull request` vào `main`.
 
+## CD (Deploy Hooks - tùy bạn cấu hình Render/Vercel)
+Repo có workflow `/.github/workflows/deploy.yml` để gọi webhook deploy:
+- Backend lên Render: dùng secret `RENDER_DEPLOY_HOOK_URL`
+- Frontend lên Vercel: dùng secret `VERCEL_DEPLOY_HOOK_URL`
+
+Lưu ý: Trong Render/Vercel, bạn cần tạo Deploy Hook (hoặc dùng tính năng auto-deploy từ Git). Khi tạo xong, điền các URL vào `GitHub Secrets` tương ứng.
+
