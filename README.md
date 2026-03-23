@@ -28,3 +28,9 @@ Endpoint:
 Nếu bạn muốn trỏ frontend tới backend đang deploy (Render), dùng file:
 - `frontend/.env.example` (biến `VITE_API_BASE_URL`)
 
+## CI (GitHub Actions)
+Repo có workflow `/.github/workflows/ci.yml` để:
+- Build backend bằng Maven
+- Build frontend bằng Vite
+Mỗi lần `push` hoặc tạo `pull request` vào `main`.
+
