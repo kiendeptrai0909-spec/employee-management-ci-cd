@@ -1,6 +1,7 @@
 package com.example.employee_management.controller;
 
 import com.example.employee_management.dto.UserCreateRequest;
+import com.example.employee_management.dto.UserPageResponse;
 import com.example.employee_management.dto.UserResponse;
 import com.example.employee_management.dto.UserUpdateRequest;
 import com.example.employee_management.service.UserService;
@@ -8,8 +9,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * CRUD cho bảng users:
@@ -33,8 +32,14 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> getAllUsers() {
-        return userService.getAllUsers();
+    public UserPageResponse getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String keyword
+    ) {
+        return userService.getUsers(page, size, sortBy, sortDir, keyword);
     }
 
     @GetMapping("/{id}")

@@ -8,10 +8,29 @@ function getErrorMessage(payload) {
   return 'Có lỗi xảy ra'
 }
 
-export async function fetchUsers() {
-  const res = await fetch(`${API_BASE_URL}/api/users`)
+export async function fetchUsers({ page = 0, size = 10, sortBy = 'id', sortDir = 'asc', keyword = '' } = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    sortBy,
+    sortDir
+  })
+  if (keyword.trim()) params.set('keyword', keyword.trim())
+
+  const res = await fetch(`${API_BASE_URL}/api/users?${params.toString()}`)
   const payload = await res.json().catch(() => null)
   if (!res.ok) throw new Error(getErrorMessage(payload))
+  if (Array.isArray(payload)) {
+    return {
+      content: payload,
+      page,
+      size,
+      totalElements: payload.length,
+      totalPages: payload.length > 0 ? 1 : 0,
+      hasNext: false,
+      hasPrevious: false
+    }
+  }
   return payload
 }
 

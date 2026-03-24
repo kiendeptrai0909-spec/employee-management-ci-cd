@@ -8,6 +8,21 @@ function emptyForm() {
 export default function App() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
+  const [query, setQuery] = useState({
+    page: 0,
+    size: 10,
+    sortBy: 'id',
+    sortDir: 'asc',
+    keyword: ''
+  })
+  const [pageMeta, setPageMeta] = useState({
+    page: 0,
+    size: 10,
+    totalElements: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false
+  })
 
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm())
@@ -19,12 +34,22 @@ export default function App() {
     return editingId == null ? 'Thêm nhân viên' : `Sửa nhân viên (id: ${editingId})`
   }, [editingId])
 
-  async function loadUsers() {
+  async function loadUsers(nextQuery) {
+    const mergedQuery = { ...query, ...nextQuery }
     setLoading(true)
     setError('')
     try {
-      const data = await fetchUsers()
-      setUsers(data)
+      const data = await fetchUsers(mergedQuery)
+      setUsers(data.content || [])
+      setPageMeta({
+        page: data.page ?? mergedQuery.page,
+        size: data.size ?? mergedQuery.size,
+        totalElements: data.totalElements ?? 0,
+        totalPages: data.totalPages ?? 0,
+        hasNext: Boolean(data.hasNext),
+        hasPrevious: Boolean(data.hasPrevious)
+      })
+      setQuery(mergedQuery)
     } catch (e) {
       setError(e.message || 'Không lấy được dữ liệu')
     } finally {
@@ -62,7 +87,7 @@ export default function App() {
         // PUT /api/users/{id}
         await updateUser(editingId, form)
       }
-      await loadUsers()
+      await loadUsers({ page: 0 })
       cancelEdit()
     } catch (e) {
       setError(e.message || 'Gửi dữ liệu thất bại')
@@ -88,7 +113,7 @@ export default function App() {
     <div className="container">
       <div className="header">
         <h1>Quản lý Nhân viên</h1>
-        <button className="btn small" onClick={loadUsers} disabled={loading}>
+        <button className="btn small" onClick={() => loadUsers()} disabled={loading}>
           {loading ? 'Đang tải...' : 'Làm mới'}
         </button>
       </div>
@@ -96,6 +121,32 @@ export default function App() {
       <div className="grid">
         <div className="card">
           {error ? <div className="error">{error}</div> : null}
+          <div className="toolbar">
+            <input
+              placeholder="Tìm theo tên, email, số điện thoại"
+              value={query.keyword}
+              onChange={(e) => setQuery((s) => ({ ...s, keyword: e.target.value }))}
+            />
+            <select
+              value={query.sortBy}
+              onChange={(e) => loadUsers({ page: 0, sortBy: e.target.value })}
+            >
+              <option value="id">Sắp xếp theo ID</option>
+              <option value="name">Sắp xếp theo Tên</option>
+              <option value="email">Sắp xếp theo Email</option>
+              <option value="phone">Sắp xếp theo SĐT</option>
+            </select>
+            <select
+              value={query.sortDir}
+              onChange={(e) => loadUsers({ page: 0, sortDir: e.target.value })}
+            >
+              <option value="asc">Tăng dần</option>
+              <option value="desc">Giảm dần</option>
+            </select>
+            <button className="btn small" onClick={() => loadUsers({ page: 0 })} disabled={loading}>
+              Tìm
+            </button>
+          </div>
 
           <table className="table">
             <thead>
@@ -136,6 +187,26 @@ export default function App() {
               )}
             </tbody>
           </table>
+          <div className="pagination">
+            <button
+              className="btn small"
+              disabled={loading || !pageMeta.hasPrevious}
+              onClick={() => loadUsers({ page: Math.max(0, pageMeta.page - 1) })}
+            >
+              Trang trước
+            </button>
+            <span>
+              Trang {pageMeta.totalPages === 0 ? 0 : pageMeta.page + 1}/{pageMeta.totalPages} - Tổng:{' '}
+              {pageMeta.totalElements}
+            </span>
+            <button
+              className="btn small"
+              disabled={loading || !pageMeta.hasNext}
+              onClick={() => loadUsers({ page: pageMeta.page + 1 })}
+            >
+              Trang sau
+            </button>
+          </div>
         </div>
 
         <div className="card">
