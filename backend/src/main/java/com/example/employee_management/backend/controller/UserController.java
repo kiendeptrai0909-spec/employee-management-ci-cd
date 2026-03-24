@@ -1,5 +1,6 @@
 package com.example.employee_management.controller;
 
+import com.example.employee_management.dto.ApiResponse;
 import com.example.employee_management.dto.UserCreateRequest;
 import com.example.employee_management.dto.UserPageResponse;
 import com.example.employee_management.dto.UserResponse;
@@ -32,40 +33,43 @@ public class UserController {
     }
 
     @GetMapping
-    public UserPageResponse getUsers(
+    public ApiResponse<UserPageResponse> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(required = false) String keyword
     ) {
-        return userService.getUsers(page, size, sortBy, sortDir, keyword);
+        UserPageResponse result = userService.getUsers(page, size, sortBy, sortDir, keyword);
+        return new ApiResponse<>("Lấy danh sách nhân viên thành công", result);
     }
 
     @GetMapping("/{id}")
-    public UserResponse getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
+        UserResponse user = userService.getUserById(id);
+        return new ApiResponse<>("Lấy thông tin nhân viên thành công", user);
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserCreateRequest request) {
         UserResponse created = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>("Tạo nhân viên thành công", created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request
     ) {
         UserResponse updated = userService.updateUser(id, request);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(new ApiResponse<>("Cập nhật nhân viên thành công", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse<>("Xóa nhân viên thành công", null));
     }
 }
 

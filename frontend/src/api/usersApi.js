@@ -3,9 +3,15 @@ const API_BASE_URL =
 
 function getErrorMessage(payload) {
   if (!payload) return 'Có lỗi xảy ra'
+  if (payload.error && typeof payload.error.message === 'string') return payload.error.message
   if (typeof payload.message === 'string') return payload.message
   if (Array.isArray(payload.details) && payload.details.length > 0) return payload.details.join('\n')
   return 'Có lỗi xảy ra'
+}
+
+function unwrapData(payload) {
+  if (payload && typeof payload === 'object' && 'data' in payload) return payload.data
+  return payload
 }
 
 export async function fetchUsers({ page = 0, size = 10, sortBy = 'id', sortDir = 'asc', keyword = '' } = {}) {
@@ -20,18 +26,19 @@ export async function fetchUsers({ page = 0, size = 10, sortBy = 'id', sortDir =
   const res = await fetch(`${API_BASE_URL}/api/users?${params.toString()}`)
   const payload = await res.json().catch(() => null)
   if (!res.ok) throw new Error(getErrorMessage(payload))
-  if (Array.isArray(payload)) {
+  const data = unwrapData(payload)
+  if (Array.isArray(data)) {
     return {
-      content: payload,
+      content: data,
       page,
       size,
-      totalElements: payload.length,
-      totalPages: payload.length > 0 ? 1 : 0,
+      totalElements: data.length,
+      totalPages: data.length > 0 ? 1 : 0,
       hasNext: false,
       hasPrevious: false
     }
   }
-  return payload
+  return data
 }
 
 export async function createUser({ name, email, phone }) {
@@ -42,7 +49,7 @@ export async function createUser({ name, email, phone }) {
   })
   const payload = await res.json().catch(() => null)
   if (!res.ok) throw new Error(getErrorMessage(payload))
-  return payload
+  return unwrapData(payload)
 }
 
 export async function updateUser(id, { name, email, phone }) {
@@ -53,7 +60,7 @@ export async function updateUser(id, { name, email, phone }) {
   })
   const payload = await res.json().catch(() => null)
   if (!res.ok) throw new Error(getErrorMessage(payload))
-  return payload
+  return unwrapData(payload)
 }
 
 export async function deleteUser(id) {
