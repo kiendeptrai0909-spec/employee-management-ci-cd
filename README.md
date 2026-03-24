@@ -1,43 +1,108 @@
 # Employee Management (Spring Boot + React + MySQL)
 
-Mục tiêu môn học: xây `Website Quản lý Nhân Viên` với CRUD dữ liệu `users (id, name, email, phone)`.
+Website Quan ly Nhan Vien voi CRUD du lieu bang `users (id, name, email, phone)`.
 
-## Repo
-- Frontend: ReactJS
-- Backend: Spring Boot (REST API)
-- DB: MySQL
-- CI/CD: GitHub Actions (sẽ cấu hình theo từng bước)
+## 1) Cong nghe su dung
+- Backend: Spring Boot + Spring Data JPA + Validation
+- Frontend: ReactJS (Vite)
+- API: REST API
+- Database: MySQL
+- CI/CD: GitHub Actions + Deploy Hooks (Render/Vercel)
 
-## Cách chạy Backend (local)
-1. Tạo database MySQL tên `employee_management`
-2. Cập nhật biến môi trường (nếu cần) hoặc dùng mặc định trong `backend/src/main/resources/application.properties`
+## 2) Link deploy
+- Frontend: https://employee-management-ci-cd.vercel.app/
+- Backend: https://employee-management-ci-cd.onrender.com/
+- GitHub: https://github.com/kiendeptrai0909-spec/employee-management-ci-cd.git
+
+## 3) Mo ta chuc nang
+He thong quan ly nhan vien cho phep:
+- Hien thi danh sach nhan vien (Read all)
+- Xem chi tiet nhan vien theo id (Read one)
+- Them nhan vien moi (Create)
+- Cap nhat thong tin nhan vien (Update)
+- Xoa nhan vien (Delete)
+
+## 4) CSDL
+Bang: `users`
+- `id` (PK, auto increment)
+- `name`
+- `email` (unique)
+- `phone`
+
+## 5) REST API
+Base URL local: `http://localhost:8080`
+
+- `GET /api/users`  
+  Lay danh sach users
+
+- `GET /api/users/{id}`  
+  Lay user theo id
+
+- `POST /api/users`  
+  Tao user moi  
+  Body:
+  ```json
+  {
+    "name": "Nguyen Van A",
+    "email": "a@gmail.com",
+    "phone": "0901234567"
+  }
+  ```
+
+- `PUT /api/users/{id}`  
+  Cap nhat user theo id  
+  Body:
+  ```json
+  {
+    "name": "Nguyen Van B",
+    "email": "b@gmail.com",
+    "phone": "0912345678"
+  }
+  ```
+
+- `DELETE /api/users/{id}`  
+  Xoa user theo id
+
+## 6) Chay backend local
+1. Tao database MySQL: `employee_management`
+2. Cau hinh bien moi truong (neu can):
    - `SPRING_DATASOURCE_URL`
    - `SPRING_DATASOURCE_USERNAME`
    - `SPRING_DATASOURCE_PASSWORD`
-3. Chạy Spring Boot
+3. Chay Spring Boot:
+   - Neu da cai Maven: `mvn spring-boot:run`
+   - Hoac chay bang IDE tai class `EmployeeManagementApplication`
 
-Endpoint:
-- `GET /api/users`
+Luu y: thong so mac dinh datasource nam trong `backend/src/main/resources/application.properties`.
 
-## Cách chạy Frontend (local)
-1. Mở terminal trong thư mục `frontend`
-2. Cài dependencies và chạy Vite
-   - `npm install`
-   - `npm run dev`
+## 7) Chay frontend local
+1. Mo terminal trong thu muc `frontend`
+2. Cai dependencies: `npm install`
+3. Chay dev server: `npm run dev`
 
-Nếu bạn muốn trỏ frontend tới backend đang deploy (Render), dùng file:
-- `frontend/.env.example` (biến `VITE_API_BASE_URL`)
+Neu muon frontend goi backend deploy tren Render:
+- Tao file `.env` trong `frontend` va them:
+  - `VITE_API_BASE_URL=https://employee-management-ci-cd.onrender.com`
+- Co the tham khao `frontend/.env.example`
 
-## CI (GitHub Actions)
-Repo có workflow `/.github/workflows/ci.yml` để:
-- Build backend bằng Maven
-- Build frontend bằng Vite
-Mỗi lần `push` hoặc tạo `pull request` vào `main`.
+## 8) CI (GitHub Actions)
+Workflow: `/.github/workflows/ci.yml`
+- Trigger khi `push` va `pull request` vao `main`
+- Build backend bang Maven
+- Build frontend bang Vite
 
-## CD (Deploy Hooks - tùy bạn cấu hình Render/Vercel)
-Repo có workflow `/.github/workflows/deploy.yml` để gọi webhook deploy:
-- Backend lên Render: dùng secret `RENDER_DEPLOY_HOOK_URL`
-- Frontend lên Vercel: dùng secret `VERCEL_DEPLOY_HOOK_URL`
+## 9) CD (GitHub Actions + Deploy Hook)
+Workflow: `/.github/workflows/deploy.yml`
+- Trigger khi `push` vao `main` hoac `workflow_dispatch`
+- Goi webhook deploy:
+  - Backend (Render): secret `RENDER_DEPLOY_HOOK_URL`
+  - Frontend (Vercel): secret `VERCEL_DEPLOY_HOOK_URL`
 
-Lưu ý: Trong Render/Vercel, bạn cần tạo Deploy Hook (hoặc dùng tính năng auto-deploy từ Git). Khi tạo xong, điền các URL vào `GitHub Secrets` tương ứng.
+## 10) Checklist demo de nop bai
+- [ ] Mo website frontend
+- [ ] Them 1 user moi
+- [ ] Sua thong tin user vua tao
+- [ ] Xoa user
+- [ ] Kiem tra du lieu thay doi tren table
+- [ ] Kiem tra tab Actions tren GitHub xanh (CI pass)
 
