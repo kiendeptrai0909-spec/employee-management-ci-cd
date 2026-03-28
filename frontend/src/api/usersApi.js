@@ -1,3 +1,5 @@
+import { authHeaders } from './authApi'
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -23,7 +25,9 @@ export async function fetchUsers({ page = 0, size = 10, sortBy = 'id', sortDir =
   })
   if (keyword.trim()) params.set('keyword', keyword.trim())
 
-  const res = await fetch(`${API_BASE_URL}/api/users?${params.toString()}`)
+  const res = await fetch(`${API_BASE_URL}/api/users?${params.toString()}`, {
+    headers: authHeaders()
+  })
   const payload = await res.json().catch(() => null)
   if (!res.ok) throw new Error(getErrorMessage(payload))
   const data = unwrapData(payload)
@@ -44,7 +48,7 @@ export async function fetchUsers({ page = 0, size = 10, sortBy = 'id', sortDir =
 export async function createUser({ name, email, phone }) {
   const res = await fetch(`${API_BASE_URL}/api/users`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ name, email, phone })
   })
   const payload = await res.json().catch(() => null)
@@ -55,7 +59,7 @@ export async function createUser({ name, email, phone }) {
 export async function updateUser(id, { name, email, phone }) {
   const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ name, email, phone })
   })
   const payload = await res.json().catch(() => null)
@@ -64,10 +68,12 @@ export async function updateUser(id, { name, email, phone }) {
 }
 
 export async function deleteUser(id) {
-  const res = await fetch(`${API_BASE_URL}/api/users/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders()
+  })
   if (!res.ok) {
     const payload = await res.json().catch(() => null)
     throw new Error(getErrorMessage(payload))
   }
 }
-

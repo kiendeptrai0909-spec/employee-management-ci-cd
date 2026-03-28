@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { clearAuth, getStoredAuth, login as apiLogin } from './api/authApi'
 import { createUser, deleteUser, fetchUsers, updateUser } from './api/usersApi'
 
 function emptyForm() {
@@ -6,6 +7,11 @@ function emptyForm() {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState(() => getStoredAuth())
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' })
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
+
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState({
@@ -57,10 +63,35 @@ export default function App() {
     }
   }
 
+  const isAdmin = auth.role === 'ADMIN'
+
   useEffect(() => {
+    if (!auth.token) return
     loadUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [auth.token])
+
+  async function handleLogin(e) {
+    e.preventDefault()
+    setLoginLoading(true)
+    setLoginError('')
+    try {
+      await apiLogin(loginForm)
+      setAuth(getStoredAuth())
+      setLoginForm({ username: '', password: '' })
+    } catch (err) {
+      setLoginError(err.message || 'Đăng nhập thất bại')
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  function handleLogout() {
+    clearAuth()
+    setAuth({ token: null, role: null, username: null })
+    setUsers([])
+    setError('')
+  }
 
   function startEdit(user) {
     setEditingId(user.id)
@@ -109,13 +140,62 @@ export default function App() {
     }
   }
 
+  if (!auth.token) {
+    return (
+      <div className="container">
+        <div className="header">
+          <h1>Quản lý Nhân viên</h1>
+        </div>
+        <div className="card" style={{ maxWidth: 420, margin: '24px auto' }}>
+          <h2 style={{ marginTop: 0, fontSize: 18 }}>Đăng nhập</h2>
+          {loginError ? <div className="error">{loginError}</div> : null}
+          <form onSubmit={handleLogin}>
+            <div className="field">
+              <label>Tên đăng nhập</label>
+              <input
+                value={loginForm.username}
+                onChange={(e) => setLoginForm((s) => ({ ...s, username: e.target.value }))}
+                autoComplete="username"
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Mật khẩu</label>
+              <input
+                type="password"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm((s) => ({ ...s, password: e.target.value }))}
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <button className="btn primary" type="submit" disabled={loginLoading}>
+              {loginLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            </button>
+          </form>
+          <p className="hint" style={{ marginTop: 16 }}>
+            Demo: admin / Admin@123 (ADMIN, được xóa) hoặc user / User@123 (USER, không xóa được).
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container">
       <div className="header">
         <h1>Quản lý Nhân viên</h1>
-        <button className="btn small" onClick={() => loadUsers()} disabled={loading}>
-          {loading ? 'Đang tải...' : 'Làm mới'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ color: '#6b7280', fontSize: 14 }}>
+            {auth.username} ({auth.role})
+          </span>
+          <button className="btn small" onClick={() => loadUsers()} disabled={loading}>
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <button className="btn small" type="button" onClick={handleLogout}>
+            Đăng xuất
+          </button>
+        </div>
       </div>
 
       <div className="grid">
@@ -177,9 +257,15 @@ export default function App() {
                         <button className="btn small" onClick={() => startEdit(u)}>
                           Sửa
                         </button>
-                        <button className="btn small danger" onClick={() => handleDelete(u.id)}>
-                          Xóa
-                        </button>
+                        {isAdmin ? (
+                          <button className="btn small danger" onClick={() => handleDelete(u.id)}>
+                            Xóa
+                          </button>
+                        ) : (
+                          <span className="hint" style={{ fontSize: 12 }}>
+                            Chỉ ADMIN xóa
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -1,5 +1,6 @@
 package com.example.employee_management.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.employee_management.dto.ApiResponse;
 import com.example.employee_management.dto.UserCreateRequest;
 import com.example.employee_management.dto.UserPageResponse;
@@ -22,8 +23,8 @@ import org.springframework.web.bind.annotation.*;
  * Có comment tiếng Việt ở logic validate thông qua DTO.
  */
 @RestController
-@CrossOrigin(origins = "*") // Dùng cho demo (khi deploy thật có thể siết origin)
 @RequestMapping("/api/users")
+@SecurityRequirement(name = "bearer-jwt")
 public class UserController {
 
     private final UserService userService;
