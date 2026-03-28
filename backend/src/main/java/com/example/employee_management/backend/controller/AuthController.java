@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,9 +38,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        String username = request.getUsername() != null ? request.getUsername().trim() : "";
+        String password = request.getPassword() != null ? request.getPassword() : "";
         try {
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                    new UsernamePasswordAuthenticationToken(username, password)
             );
             UserDetails principal = (UserDetails) auth.getPrincipal();
             AppAccount account = appAccountRepository.findByUsername(principal.getUsername())
@@ -48,7 +51,7 @@ public class AuthController {
             String token = jwtService.generateToken(account.getUsername(), role);
             LoginResponse body = new LoginResponse("Bearer", token, account.getUsername(), role);
             return ResponseEntity.ok(new ApiResponse<>("Đăng nhập thành công", body));
-        } catch (BadCredentialsException e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>("Sai tên đăng nhập hoặc mật khẩu", null));
         }

@@ -20,7 +20,8 @@ public class AccountDataInitializer {
             @Value("${app.seed.admin-username:admin}") String adminUser,
             @Value("${app.seed.admin-password:Admin@123}") String adminPass,
             @Value("${app.seed.user-username:user}") String normalUser,
-            @Value("${app.seed.user-password:User@123}") String userPass
+            @Value("${app.seed.user-password:User@123}") String userPass,
+            @Value("${app.seed.sync-passwords:false}") boolean syncPasswords
     ) {
         return args -> {
             if (!seedEnabled) {
@@ -28,9 +29,17 @@ public class AccountDataInitializer {
             }
             if (repo.findByUsername(adminUser).isEmpty()) {
                 repo.save(new AppAccount(adminUser, encoder.encode(adminPass), Role.ADMIN));
+            } else if (syncPasswords) {
+                AppAccount a = repo.findByUsername(adminUser).orElseThrow();
+                a.setPassword(encoder.encode(adminPass));
+                repo.save(a);
             }
             if (repo.findByUsername(normalUser).isEmpty()) {
                 repo.save(new AppAccount(normalUser, encoder.encode(userPass), Role.USER));
+            } else if (syncPasswords) {
+                AppAccount u = repo.findByUsername(normalUser).orElseThrow();
+                u.setPassword(encoder.encode(userPass));
+                repo.save(u);
             }
         };
     }

@@ -85,6 +85,15 @@ Neu muon frontend goi backend deploy tren Render:
   - `VITE_API_BASE_URL=https://employee-management-ci-cd.onrender.com`
 - Co the tham khao `frontend/.env.example`
 
+**Dang nhap web (sau khi co JWT):** tai khoan seed mac dinh (bang `app_accounts`):
+- `admin` / `Admin@123` (ADMIN)
+- `user` / `User@123` (USER)
+
+**Chay local ma frontend bao "Sai ten dang nhap hoac mat khau":**
+1. Trong `frontend/.env` phai trung URL backend dang chay, vi du: `VITE_API_BASE_URL=http://localhost:8080` (sau do chay lai `npm run dev`).
+2. Go dung mat khau: `Admin@123` (chu A hoa, co ky tu `@`).
+3. Neu truoc do da co dong trong `app_accounts` voi mat khau cu / sai dinh dang, seed khong ghi de. Dat `app.seed.sync-passwords=true` trong `application.properties` (hoac bien `APP_SEED_SYNC_PASSWORDS=true`), khoi dong lai backend **mot lan**, roi dat lai `false` neu muon.
+
 ## 8) CI (GitHub Actions)
 Workflow: `/.github/workflows/ci.yml`
 - Trigger khi `push` va `pull request` vao `main`

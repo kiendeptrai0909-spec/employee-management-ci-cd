@@ -219,12 +219,16 @@ export default function App() {
 
   if (!auth.token) {
     return (
-      <div className="container">
-        <div className="header">
-          <h1>Quản lý Nhân viên</h1>
+      <div className="login-page">
+        <div className="login-brand">
+          <div className="login-brand-icon" aria-hidden>
+            👥
+          </div>
+          <h1>Quản lý nhân viên</h1>
+          <p>Đăng nhập để quản lý danh sách và thao tác CRUD</p>
         </div>
-        <div className="card" style={{ maxWidth: 420, margin: '24px auto' }}>
-          <h2 style={{ marginTop: 0, fontSize: 18 }}>Đăng nhập</h2>
+        <div className="login-card">
+          <h2>Đăng nhập</h2>
           {loginError ? <div className="error">{loginError}</div> : null}
           <form onSubmit={handleLogin}>
             <div className="field">
@@ -233,6 +237,7 @@ export default function App() {
                 value={loginForm.username}
                 onChange={(e) => setLoginForm((s) => ({ ...s, username: e.target.value }))}
                 autoComplete="username"
+                placeholder="vd: admin"
                 required
               />
             </div>
@@ -243,6 +248,7 @@ export default function App() {
                 value={loginForm.password}
                 onChange={(e) => setLoginForm((s) => ({ ...s, password: e.target.value }))}
                 autoComplete="current-password"
+                placeholder="••••••••"
                 required
               />
             </div>
@@ -250,33 +256,46 @@ export default function App() {
               {loginLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
-          <p className="hint" style={{ marginTop: 16 }}>
-            Demo: admin / Admin@123 (ADMIN, được xóa) hoặc user / User@123 (USER, không xóa được).
+          <p className="hint">
+            <strong>Demo:</strong> <code>admin</code> / <code>Admin@123</code> (ADMIN — đầy đủ quyền) hoặc{' '}
+            <code>user</code> / <code>User@123</code> (USER).
           </p>
         </div>
       </div>
     )
   }
 
+  const initials = (auth.username || '?').slice(0, 2).toUpperCase()
+
   return (
     <div className="container">
       <div className="header">
-        <h1>Quản lý Nhân viên</h1>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ color: '#6b7280', fontSize: 14 }}>
-            {auth.username} ({auth.role})
-          </span>
+        <div className="brand">
+          <div className="brand-mark" aria-hidden>
+            👥
+          </div>
+          <div className="brand-text">
+            <h1>Quản lý nhân viên</h1>
+            <span>Danh sách, tìm kiếm, phân trang và thao tác nhanh</span>
+          </div>
+        </div>
+        <div className="header-actions">
+          <div className="user-pill">
+            <span className="avatar">{initials}</span>
+            <span>{auth.username}</span>
+            <span className={auth.role === 'ADMIN' ? 'badge badge-admin' : 'badge badge-user'}>{auth.role}</span>
+          </div>
           <button className="btn small" onClick={() => loadUsers()} disabled={loading}>
             {loading ? 'Đang tải...' : 'Làm mới'}
           </button>
-          <button className="btn small" type="button" onClick={handleLogout}>
+          <button className="btn small btn-ghost" type="button" onClick={handleLogout}>
             Đăng xuất
           </button>
         </div>
       </div>
 
       <div className="grid">
-        <div className="card">
+        <div className="card card-elevated">
           {error ? <div className="error">{error}</div> : null}
           {successMsg ? <div className="success">{successMsg}</div> : null}
           <div className="toolbar">
@@ -311,7 +330,10 @@ export default function App() {
                 <button className="btn small" type="button" disabled={loading || csvBusy} onClick={handleExportCsv}>
                   Xuất CSV
                 </button>
-                <label className="btn small" style={{ cursor: csvBusy ? 'wait' : 'pointer' }}>
+                <label
+                  className="btn small file-btn"
+                  style={{ cursor: csvBusy ? 'wait' : 'pointer' }}
+                >
                   Import CSV
                   <input
                     type="file"
@@ -333,6 +355,7 @@ export default function App() {
             ) : null}
           </div>
 
+          <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -355,8 +378,8 @@ export default function App() {
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} style={{ color: '#6b7280', padding: '14px 8px' }}>
-                    Chưa có dữ liệu. Hãy thêm nhân viên phía bên phải.
+                  <td className="empty-cell" colSpan={isAdmin ? 6 : 5}>
+                    Chưa có dữ liệu. Thêm nhân viên ở cột bên phải.
                   </td>
                 </tr>
               ) : (
@@ -385,9 +408,7 @@ export default function App() {
                             Xóa
                           </button>
                         ) : (
-                          <span className="hint" style={{ fontSize: 12 }}>
-                            Chỉ ADMIN xóa
-                          </span>
+                          <span className="hint-inline">Chỉ ADMIN xóa</span>
                         )}
                       </div>
                     </td>
@@ -418,8 +439,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="card">
-          <h2 style={{ margin: '0 0 12px 0', fontSize: 16 }}>{formTitle}</h2>
+        <div className="card card-elevated">
+          <h2 className="panel-title">{formTitle}</h2>
 
           <form onSubmit={handleSubmit}>
             <div className="field">
