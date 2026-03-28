@@ -19,8 +19,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build backend (Maven)
-        run: mvn -B package
+      - name: Test and package backend (Maven)
+        run: mvn -B test package
 
   frontend:
     runs-on: ubuntu-latest
@@ -35,6 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: cd frontend && npm install --no-fund --no-audit
+
+      - name: Test frontend (Vitest)
+        run: cd frontend && npm run test
 
       - name: Build frontend (Vite)
         run: cd frontend && npm run build
