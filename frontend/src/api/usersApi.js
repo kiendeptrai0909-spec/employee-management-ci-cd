@@ -1,4 +1,4 @@
-import { authHeaders } from './authApi'
+import { authHeaders, authHeadersMultipart } from './authApi'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
@@ -76,4 +76,43 @@ export async function deleteUser(id) {
     const payload = await res.json().catch(() => null)
     throw new Error(getErrorMessage(payload))
   }
+}
+
+export async function exportUsersCsv() {
+  const res = await fetch(`${API_BASE_URL}/api/users/export/csv`, { headers: authHeadersMultipart() })
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null)
+    throw new Error(getErrorMessage(payload))
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'users.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export async function importUsersCsv(file) {
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch(`${API_BASE_URL}/api/users/import/csv`, {
+    method: 'POST',
+    headers: authHeadersMultipart(),
+    body: fd
+  })
+  const payload = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(getErrorMessage(payload))
+  return unwrapData(payload)
+}
+
+export async function bulkDeleteUsers(ids) {
+  const res = await fetch(`${API_BASE_URL}/api/users/bulk`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+    body: JSON.stringify({ ids })
+  })
+  const payload = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(getErrorMessage(payload))
+  return unwrapData(payload)
 }

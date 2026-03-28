@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { clearAuth, getStoredAuth, login as apiLogin } from './api/authApi'
-import { createUser, deleteUser, fetchUsers, updateUser } from './api/usersApi'
+import {
+  bulkDeleteUsers,
+  createUser,
+  deleteUser,
+  exportUsersCsv,
+  fetchUsers,
+  importUsersCsv,
+  updateUser
+} from './api/usersApi'
 
 function emptyForm() {
   return { name: '', email: '', phone: '' }
@@ -34,7 +42,10 @@ export default function App() {
   const [form, setForm] = useState(emptyForm())
 
   const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [csvBusy, setCsvBusy] = useState(false)
 
   const formTitle = useMemo(() => {
     return editingId == null ? 'Thêm nhân viên' : `Sửa nhân viên (id: ${editingId})`
@@ -56,6 +67,7 @@ export default function App() {
         hasPrevious: Boolean(data.hasPrevious)
       })
       setQuery(mergedQuery)
+      setSelectedIds([])
     } catch (e) {
       setError(e.message || 'Không lấy được dữ liệu')
     } finally {
@@ -91,6 +103,7 @@ export default function App() {
     setAuth({ token: null, role: null, username: null })
     setUsers([])
     setError('')
+    setSuccessMsg('')
   }
 
   function startEdit(user) {
@@ -110,6 +123,7 @@ export default function App() {
     e.preventDefault()
     setSubmitLoading(true)
     setError('')
+    setSuccessMsg('')
     try {
       if (editingId == null) {
         // POST /api/users
@@ -132,11 +146,74 @@ export default function App() {
     if (!ok) return
 
     setError('')
+    setSuccessMsg('')
     try {
       await deleteUser(id)
       await loadUsers()
     } catch (e) {
       setError(e.message || 'Xóa thất bại')
+    }
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  function toggleSelectAll() {
+    if (users.length === 0) return
+    if (selectedIds.length === users.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(users.map((u) => u.id))
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return
+    const ok = window.confirm(`Xóa mềm ${selectedIds.length} nhân viên đã chọn?`)
+    if (!ok) return
+    setError('')
+    setSuccessMsg('')
+    try {
+      await bulkDeleteUsers(selectedIds)
+      await loadUsers()
+    } catch (e) {
+      setError(e.message || 'Xóa hàng loạt thất bại')
+    }
+  }
+
+  async function handleExportCsv() {
+    setCsvBusy(true)
+    setError('')
+    setSuccessMsg('')
+    try {
+      await exportUsersCsv()
+    } catch (e) {
+      setError(e.message || 'Xuất CSV thất bại')
+    } finally {
+      setCsvBusy(false)
+    }
+  }
+
+  async function handleImportCsv(e) {
+    const file = e.target.files && e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    setCsvBusy(true)
+    setError('')
+    setSuccessMsg('')
+    try {
+      const result = await importUsersCsv(file)
+      const msg =
+        result && typeof result.imported === 'number'
+          ? `Đã import ${result.imported} dòng, bỏ qua ${result.skipped ?? 0}.`
+          : 'Import xong.'
+      setSuccessMsg(msg)
+      await loadUsers({ page: 0 })
+    } catch (err) {
+      setError(err.message || 'Import CSV thất bại')
+    } finally {
+      setCsvBusy(false)
     }
   }
 
@@ -201,6 +278,7 @@ export default function App() {
       <div className="grid">
         <div className="card">
           {error ? <div className="error">{error}</div> : null}
+          {successMsg ? <div className="success">{successMsg}</div> : null}
           <div className="toolbar">
             <input
               placeholder="Tìm theo tên, email, số điện thoại"
@@ -215,6 +293,8 @@ export default function App() {
               <option value="name">Sắp xếp theo Tên</option>
               <option value="email">Sắp xếp theo Email</option>
               <option value="phone">Sắp xếp theo SĐT</option>
+              <option value="createdAt">Sắp xếp theo tạo lúc</option>
+              <option value="updatedAt">Sắp xếp theo cập nhật</option>
             </select>
             <select
               value={query.sortDir}
@@ -226,11 +306,45 @@ export default function App() {
             <button className="btn small" onClick={() => loadUsers({ page: 0 })} disabled={loading}>
               Tìm
             </button>
+            {isAdmin ? (
+              <>
+                <button className="btn small" type="button" disabled={loading || csvBusy} onClick={handleExportCsv}>
+                  Xuất CSV
+                </button>
+                <label className="btn small" style={{ cursor: csvBusy ? 'wait' : 'pointer' }}>
+                  Import CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    style={{ display: 'none' }}
+                    disabled={csvBusy}
+                    onChange={handleImportCsv}
+                  />
+                </label>
+                <button
+                  className="btn small danger"
+                  type="button"
+                  disabled={loading || selectedIds.length === 0}
+                  onClick={handleBulkDelete}
+                >
+                  Xóa đã chọn ({selectedIds.length})
+                </button>
+              </>
+            ) : null}
           </div>
 
           <table className="table">
             <thead>
               <tr>
+                {isAdmin ? (
+                  <th style={{ width: 44 }}>
+                    <input
+                      type="checkbox"
+                      checked={users.length > 0 && selectedIds.length === users.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
+                ) : null}
                 <th style={{ width: 80 }}>ID</th>
                 <th>Tên</th>
                 <th style={{ width: 260 }}>Email</th>
@@ -241,13 +355,22 @@ export default function App() {
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ color: '#6b7280', padding: '14px 8px' }}>
+                  <td colSpan={isAdmin ? 6 : 5} style={{ color: '#6b7280', padding: '14px 8px' }}>
                     Chưa có dữ liệu. Hãy thêm nhân viên phía bên phải.
                   </td>
                 </tr>
               ) : (
                 users.map((u) => (
                   <tr key={u.id}>
+                    {isAdmin ? (
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(u.id)}
+                          onChange={() => toggleSelect(u.id)}
+                        />
+                      </td>
+                    ) : null}
                     <td>{u.id}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>

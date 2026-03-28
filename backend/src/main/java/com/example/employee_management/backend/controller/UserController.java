@@ -2,15 +2,22 @@ package com.example.employee_management.controller;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.example.employee_management.dto.ApiResponse;
+import com.example.employee_management.dto.BulkDeleteRequest;
+import com.example.employee_management.dto.CsvImportResult;
 import com.example.employee_management.dto.UserCreateRequest;
 import com.example.employee_management.dto.UserPageResponse;
 import com.example.employee_management.dto.UserResponse;
 import com.example.employee_management.dto.UserUpdateRequest;
 import com.example.employee_management.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 /**
  * CRUD cho bảng users:
@@ -31,6 +38,31 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @GetMapping("/export/csv")
+    public ResponseEntity<byte[]> exportUsersCsv() throws IOException {
+        byte[] body = userService.exportUsersCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(body);
+    }
+
+    @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<CsvImportResult>> importUsersCsv(@RequestPart("file") MultipartFile file)
+            throws IOException {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>("File rỗng", null));
+        }
+        CsvImportResult result = userService.importUsersFromCsv(file.getInputStream());
+        return ResponseEntity.ok(new ApiResponse<>("Import CSV hoàn tất", result));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<Void>> bulkDelete(@Valid @RequestBody BulkDeleteRequest request) {
+        userService.bulkSoftDelete(request);
+        return ResponseEntity.ok(new ApiResponse<>("Đã xóa mềm các bản ghi được chọn", null));
     }
 
     @GetMapping

@@ -40,6 +40,14 @@ export function authHeaders() {
   return h
 }
 
+/** Không set Content-Type (dùng cho multipart upload). */
+export function authHeadersMultipart() {
+  const { token } = getStoredAuth()
+  const h = {}
+  if (token) h.Authorization = `Bearer ${token}`
+  return h
+}
+
 export async function login({ username, password }) {
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
